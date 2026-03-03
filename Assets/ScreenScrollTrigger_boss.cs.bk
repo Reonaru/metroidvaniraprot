@@ -1,0 +1,79 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+// プレイヤーが触れたらカメラをスクロールさせる
+public class ScreenScrollTrigger_boss : MonoBehaviour
+{
+    [Header("設定")]
+    [Tooltip("カメラマネージャー")]
+    public CameraManager1 cameraManager;
+
+    [Header("カメラ追従設定")]
+    public float newMaxXLimit = 10f;    
+    public float newMinXLimit = 10f;   
+
+    [SerializeField] RoomData testdata;
+
+    [Tooltip("スクロール方向 (X軸方向の画面数)")]
+    public float screensToScroll = 1f;
+
+    [Tooltip("カメラの移動先 (この値を設定すると screensToScroll は無視)")]
+    public Vector3? fixedTargetPosition; // 固定の目標位置 (任意)
+
+    private bool hasTriggered = false;
+
+    private void Start()
+    {
+        // CameraManagerを自動で探す (シーン内に1つだけある場合)
+        if (cameraManager == null)
+        {
+            cameraManager = FindObjectOfType<CameraManager1>();
+        }
+        GameObject target = GameObject.Find("end");
+
+        newMaxXLimit = testdata.newMaxXlimit;
+        newMinXLimit = testdata.newMinXlimit;
+
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        // 1. プレイヤーかどうかのチェック
+        if (!other.CompareTag("Player")) return;
+        
+        // 2. 既に実行済みかどうかのチェック
+      //  if (hasTriggered) return;
+
+        // 3. 移動目標位置の計算
+        Vector3 currentCamPos = cameraManager.transform.position;
+        Vector3 targetPosition;
+
+        if (fixedTargetPosition.HasValue)
+        {
+            // 💡 固定位置が設定されている場合
+            targetPosition = fixedTargetPosition.Value;
+        }
+        else
+        {
+            // 💡 画面単位でスクロールする場合
+            Camera cam = Camera.main;
+            float screenWidth = cam.orthographicSize * 2f * cam.aspect;
+            
+            targetPosition = currentCamPos + new Vector3(screenWidth * screensToScroll, 0, 0);
+        }
+        
+        // Z軸はカメラのZ位置に合わせる (-10)
+        targetPosition.z = currentCamPos.z; 
+
+    
+        // 4. カメラにスクロールを指示
+        cameraManager.ScrollTo(targetPosition,newMinXLimit,newMaxXLimit);
+
+        // 5. 実行フラグを立てる
+        hasTriggered = true;
+        
+        // 補足: 一度きりなので、このTriggerオブジェクトをDestroyしても良い
+        // Destroy(gameObject);
+    }
+}
