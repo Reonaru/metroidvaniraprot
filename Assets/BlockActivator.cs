@@ -6,6 +6,7 @@ public class BlockActivator : MonoBehaviour
 {
     public string targetFlagName; 
     public GameObject blockObject; // 💡 出現させたいブロック（InactiveでOK）をここにドラッグ
+    public GameObject blockObject2;
 
     void Update()
     {
@@ -13,6 +14,7 @@ public class BlockActivator : MonoBehaviour
         if (!blockObject.activeSelf && Gmanager.Instance.GetFlag(targetFlagName))
         {
             blockObject.SetActive(true);
+            blockObject2.SetActive(true);
             Debug.Log($"{blockObject.name} を外部から起動しました");
         }
     }

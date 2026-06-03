@@ -8,6 +8,9 @@ using UnityEngine.UI;
 /// </summary>
 public class Playersc : MonoBehaviour
 {
+    public AudioSource audioSource;
+    public AudioClip idleSE;
+    public AudioClip shotSE;
 	// 変数宣言部
  	Rigidbody2D rbody2D;
     private bool isjumped = false;
@@ -85,16 +88,34 @@ public class Playersc : MonoBehaviour
 	//		horizontalInput = 0;
 	//		Debug.Log("ブロック");
 	//	}
+    if (horizontalInput != 0 && coli.isground) 
+    {
+                if (!audioSource.isPlaying)
+            {
+                audioSource.loop = true;
+                PlaySE(idleSE); 
+            }
+    }
 		}
             
         else if (Input.GetKey(KeyCode.LeftArrow)){
             horizontalInput = -1f;
             transform.localScale = new Vector3(-1, 1, 1);
+
+if (horizontalInput != 0 && coli.isground) 
+    {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.loop = true;
+                PlaySE(idleSE);
+            }
+    }
         }
 
         // ジャンプ入力
         if (Input.GetKeyDown(KeyCode.Space))
         {
+
 		if (jumpInput == false && coli.isground == true){
             jumpInput = true;
             jumpBufferCounter = jumpBufferTime;
@@ -111,6 +132,7 @@ public class Playersc : MonoBehaviour
 
         if (Input.GetKey(KeyCode.A) && Time.time >= nextFireTime)
         {
+            PlaySE(shotSE);
             Fire();
             nextFireTime = Time.time + fireRate;
         }
@@ -120,6 +142,11 @@ public class Playersc : MonoBehaviour
             Gmanager.Instance.SetCurrentState(GameState.Prepare);
         }
 
+        if (Input.GetKey(KeyCode.D))
+        {
+            coli.roomsearch();
+            Debug.Log("roomsearch");
+        }
 
         if (Input.GetKey(KeyCode.C))
         {
@@ -150,16 +177,18 @@ public class Playersc : MonoBehaviour
      //   {
      //   Debug.Log("ジャンプした！");
       //  }
-
-
-
-
     }
+
+void PlaySE(AudioClip clip)
+{
+    if (clip == null || audioSource == null) return;
+    audioSource.PlayOneShot(clip, 0.1f);
+}
 
     // ★ このメソッドはプレイヤーが持っている
     public void ResetPosition()
     {
-        transform.position = startPosition;
+    transform.position = Gmanager.Instance.GetCurrentCheckPoint();
 
         // Rigidbody2Dのリセット処理など...
         Rigidbody2D rb = GetComponent<Rigidbody2D>();

@@ -14,6 +14,8 @@ public enum GameState{
 public class Gmanager : MonoBehaviour
 {
 
+
+    
     public static Gmanager Instance;
     private Dictionary<string, bool> flags = new Dictionary<string, bool>();
     private GameState currentGameState;
@@ -23,11 +25,16 @@ public class Gmanager : MonoBehaviour
 	public GameObject shatter;
 
     public int enemydefeat = 0;
+    
+	private RoomManager roomManager;
 
+[SerializeField] private Transform[] checkPoints; 
+    private int currentCheckPointIndex = 0;
 
     void Awake(){
         Instance = this;
         SetCurrentState(GameState.Start);
+
     }
     // Start is called before the first frame update
 
@@ -41,7 +48,7 @@ public class Gmanager : MonoBehaviour
 	void OnGameStateChanged(GameState state){
 		switch (state) {
 		case GameState.Start:
-			StartAction ();
+
 			break;
 		case GameState.Prepare:
 			StartCoroutine (PrepareCoroutine ());
@@ -58,9 +65,7 @@ public class Gmanager : MonoBehaviour
 	}
 
 	// Startになったときの処理
-	void StartAction(){
-        label.text = "start";
-	}
+
 
 	// Prepareになったときの処理
 	IEnumerator PrepareCoroutine(){
@@ -106,10 +111,6 @@ public class Gmanager : MonoBehaviour
         flags.Add(key, value);
     }
 
-
-
-    // 💡 ログを出して、動いていることを「目」で確認する（デバッグの基本）
-    Debug.Log($"[Gmanager] フラグ更新: {key} = {value}");
 }
 
 public bool GetFlag(string key)
@@ -117,13 +118,28 @@ public bool GetFlag(string key)
     // 辞書にその名前のフラグがあるか確認
     if (flags.ContainsKey(key))
     {
-		Debug.Log("getflag動いた");
         return flags[key]; // あればその値を返す(true or false)
     }
     
     // 💡 盲点：まだ登録されていないフラグを聞かれたら、
     // まだクリアしていない（false）とみなすのが論理的に安全
     return false;
+}
+
+
+public void SetCheckPoint(int index)
+{
+    if (index < checkPoints.Length)
+    {
+        currentCheckPointIndex = index;
+        Debug.Log($"チェックポイント{index}に更新");
+    }
+}
+public Vector3 GetCurrentCheckPoint()
+{
+    if (checkPoints.Length > 0)
+        return checkPoints[currentCheckPointIndex].position;
+    return Vector3.zero;
 }
 
 }

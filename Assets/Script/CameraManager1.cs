@@ -187,6 +187,11 @@ scrol.transform.position = initialScrolPosition;
         }
     }
 
+    public void ForceStopScrolling()
+{
+    isScrolling = false;
+}
+
     /// <summary>
     /// ターゲットを追いかけ、指定された範囲に制限する
     /// </summary>

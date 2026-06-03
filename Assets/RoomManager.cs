@@ -56,7 +56,7 @@ public void SetCurrentRoom(RoomData newRoom, bool shouldOffsetPlayer = false)
 if (shouldOffsetPlayer)
     {
         float offset = 3.0f; 
-// SetCurrentRoom 内の押し出し判定に追記
+// Room 内の押し出し判定に追記
 if (moveDirection == ScrollDirection.Right) player.transform.position += new Vector3(offset, 0, 0);
 else if (moveDirection == ScrollDirection.Left) player.transform.position -= new Vector3(offset, 0, 0);
 else if (moveDirection == ScrollDirection.Up) player.transform.position += new Vector3(0, offset, 0);    // 💡 追加
@@ -81,6 +81,10 @@ else if (moveDirection == ScrollDirection.Down) player.transform.position -= new
         Debug.Log($"現在の部屋: Room ID {currentRoomID}, X追従範囲: {newRoom.minXBoundary} ~ {newRoom.maxXBoundary}");
     }
     
+
+
+
+
     /// <summary>
     /// 💡 Triggerから呼ばれ、カメラのスクロールを開始する
     /// </summary>
@@ -100,7 +104,6 @@ public void StartScroll(RoomData targetRoom)
     float diffX = targetRoom.minXBoundary - camPos.x;
     float diffY = targetRoom.YBoundary - camPos.y;
 
-    Debug.Log($"[TARGET CHECK] 目的地: {targetRoom.name}, 部屋のMinX: {targetRoom.minXBoundary}, 今のカメラX: {camPos.x}, diffY: {diffY}");
 
     // 💡 修正のキモ：縦の移動距離が一定(2.0f)以上なら、横のことは考えない！
     if (Mathf.Abs(diffY) > 2.0f) 
@@ -123,7 +126,6 @@ public void StartScroll(RoomData targetRoom)
     }
 
     Vector3 targetPos = new Vector3(finalX, finalY, camPos.z);
-    Debug.Log($"[EXECUTE] Direction: {moveDirection}, FinalTarget: {targetPos}");
 
     cameraManager.ScrollTo(
     targetPos, 
@@ -136,4 +138,26 @@ public void StartScroll(RoomData targetRoom)
         SetCurrentRoom(targetRoom, true);
     });
 }
+
+public void ResetRoom()
+{
+    SetCurrentRoom(allRoomData[0], false); // 最初の部屋に戻す
+}
+
+
+public RoomData GetRoomByPosition(Vector3 playerPos)
+{
+    foreach (RoomData room in allRoomData)
+    {
+        if (playerPos.x >= room.minXBoundary && playerPos.x <= room.maxXBoundary &&
+            playerPos.y >= room.YBoundary    && playerPos.y <= room.maxYBoundary)
+        {
+            return room;
+        }
+    }
+    return allRoomData[0]; // 見つからなければRoom1
+}
+
+
+
 }

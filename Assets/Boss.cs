@@ -25,6 +25,13 @@ public class Boss : MonoBehaviour
     
     [Header("方向転換設定")]
     public float turnCooldown = 0.5f; // 方向転換のクールダウン時間
+
+    [Header("無敵判定")]
+    public float invincibilityDuration = 1.0f;
+    private bool isInvincible = false;
+
+    private Animator anim;
+
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -60,6 +67,7 @@ public class Boss : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         startPosition = transform.position;
+        anim = GetComponent<Animator>();
         
         // プレイヤーを探す
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -72,8 +80,8 @@ public class Boss : MonoBehaviour
       //  CheckWall();
       //  Move();
         
-       // if (facePlayer && player != null)
-       //     FacePlayer();
+        if (facePlayer && player != null)
+            FacePlayer();
 
     // 現在の状態に応じて、実行する関数を切り替える
         switch (currentState)
@@ -159,6 +167,7 @@ public class Boss : MonoBehaviour
     
 void HandleIdle()
 {
+    anim.Play("DarkWolf_2d_Idle Animation");
 // 監視ロジック：プレイヤーとの距離が5以下なら
 if (Vector3.Distance(transform.position, player.position) < 10f)
 {
@@ -224,6 +233,7 @@ void HandleCharge()
 
 void HandleAttack()
 {
+    anim.Play("DarkWolf_2d_Attack Animation");
     // 猛スピードで突進！
     rb.velocity = new Vector2(dashDirection * moveSpeed * 3f, rb.velocity.y);
     alertTimer -= Time.deltaTime;
@@ -233,6 +243,31 @@ void HandleAttack()
         currentState = EnemyState.Cooldown;
         alertTimer = 1.0f; // 攻撃後の大きな隙
     }
+}
+
+private IEnumerator InvincibilityRoutine()
+{
+    isInvincible = true;
+    float elapsed = 0f;
+anim.Play("DarkWolf_2d_Damage Animation");
+    // 無敵時間中、ループで点滅させる
+    while (elapsed < invincibilityDuration)
+    {
+        
+        // スプライトを透明にする（または赤くする）
+        spriteRenderer.color = new Color(1f, 1f, 1f, 0.2f); 
+        yield return new WaitForSeconds(0.1f);
+        
+        // 元に戻す
+        spriteRenderer.color = Color.white;
+        yield return new WaitForSeconds(0.1f);
+
+        elapsed += 0.2f;
+    }
+
+    // 最後に必ず状態をリセット
+    spriteRenderer.color = Color.white;
+    isInvincible = false;
 }
 
     //壁への接触判定
@@ -270,22 +305,29 @@ void HandleAttack()
     {
         if (player == null) return;
         
-        bool shouldFlip = player.position.x < transform.position.x;
+        bool shouldFlip = player.position.x > transform.position.x;
         spriteRenderer.flipX = shouldFlip;
     }
     
     // ダメージを受ける
     public void TakeDamage(int damageAmount)
     {
+        if(isInvincible || hp <= 0) return;
+
         hp -= damageAmount;
         
         // 点滅エフェクト（簡易版）
-        StartCoroutine(FlashEffect());
+    //    StartCoroutine(FlashEffect());
         
         if (hp <= 0)
         {
             Die();
         }
+        else
+    {
+        // 生きている場合のみ無敵コルーチンを開始
+        StartCoroutine(InvincibilityRoutine());
+    }
     }
     
     System.Collections.IEnumerator FlashEffect()
@@ -311,6 +353,7 @@ void HandleAttack()
     // プレイヤーとの接触判定
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (isInvincible) return;
         if (other.CompareTag("bullet"))
         {
             // プレイヤーにダメージを与える

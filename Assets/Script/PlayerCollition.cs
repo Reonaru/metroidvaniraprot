@@ -20,6 +20,7 @@ public class PlayerCollition : MonoBehaviour
 	private Playersc playerScript;
 	private SpriteRenderer playerRenderer;
     private CameraManager1 cameramanager1;
+    public RoomManager roommanager; 
 
 	private ItemCounter itemCounter;
 
@@ -28,8 +29,12 @@ public class PlayerCollition : MonoBehaviour
 	public GameObject leftbox;
 	private bool canMoveRight = true;
 
+    private GameOverUI gameOverUI;
+    private GameOver go;
+
     [Header("ダメージ設定")]
     public float damageAmount = 10f;  // 受けるダメージ量
+    public float dropdamageAmount = 100f;  // 受けるダメージ量
     public float blinkDuration = 0.1f;  // 点滅の間隔
 
     private Coroutine blinkCoroutine;  // 点滅用のコルーチン
@@ -42,6 +47,10 @@ public class PlayerCollition : MonoBehaviour
         playerRenderer = GetComponentInParent<SpriteRenderer>();
         itemCounter = FindObjectOfType<ItemCounter>();  
         cameramanager1 = FindObjectOfType<CameraManager1>();
+        gameOverUI = FindObjectOfType<GameOverUI>(); // 追加
+        go = FindObjectOfType<GameOver>(); // 追加
+        
+
 
         // 当たり判定用のColliderを設定
         SetupCollisionDetector();
@@ -69,6 +78,12 @@ public class PlayerCollition : MonoBehaviour
     {
         TakeDamage(damageAmount);
         Debug.Log("敵にぶつかりました！");
+    }
+
+        if (other.CompareTag("falldamage"))
+    {
+        TakeDamage(dropdamageAmount);
+        Debug.Log("落ちました");
     }
 
         
@@ -100,6 +115,12 @@ public class PlayerCollition : MonoBehaviour
         }
     }
 
+
+    public void roomsearch(){
+ RoomData spawnRoom = roommanager.GetRoomByPosition(playerScript.transform.position);
+   
+        roommanager.SetCurrentRoom(spawnRoom, false);
+    }
 
 	public bool CheckRightBoxCollision()
     {
@@ -205,7 +226,7 @@ void TakeDamage(float damage)
     
     // HPを減らす
     health -= damage;
-    Debug.Log($"ダメージを受けました！ 残りHP: {health}");
+
     
     // HPが0以下になったら
     if (health <= 0)
@@ -270,12 +291,32 @@ void EndInvincibility()
 void GameOver()
 {
     Debug.Log("ゲームオーバー！");
-    // ここにゲームオーバー時の処理を追加
-    // 例：playerScript.enabled = false;
-    playerScript.enabled = false;
-    playerRenderer.color = new Color(1, 1, 1, 0.1f);
+    playerScript.enabled = false; // 操作を止める
+    go.Show();
+
+
+    // ゲームオーバーUIを表示（フェードイン）
+    if (gameOverUI != null)
+        gameOverUI.ShowGameOver();
+    else
+        Debug.LogError("GameOverUIが見つかりません");
+}
+
+public void RetryGame()
+{
+    if (blinkCoroutine != null)
+    {
+        StopCoroutine(blinkCoroutine);
+        blinkCoroutine = null;
+    }
+    playerRenderer.color = new Color(1, 1, 1, 1f);
+    isInvincible = false;
+    health = 20f;
     playerScript.ResetPosition();
+    StartInvincibility(); // リスポーン無敵
+    playerScript.enabled = true;
     cameramanager1.ResetCameraForRetry();
+        roommanager.ResetRoom(); // 追加
 }
 
 }

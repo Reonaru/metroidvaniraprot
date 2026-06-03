@@ -1,0 +1,193 @@
+// File: EnemyPatrolLogic.cs
+
+using UnityEngine;
+using System; // For Action
+
+/// <summary>
+/// 敵の 'Patrol' 状態のロジックを管理するクラス。
+/// Enemy2D.cs によってインスタンス化され、管理されることを想定しています。
+/// </summary>
+public class EnemyPatrolLogic
+{
+    // --- Dependencies from Enemy2D.cs ---
+    // これらの参照は、Enemy2D.cs から Initialize メソッドを通じて提供されます。
+    private Rigidbody2D rb;
+    private SpriteRenderer spriteRenderer;
+    private Animator anim;
+    private Transform player;
+    private Vector3 startPosition;
+    private Enemy2D enemyScript; // Enemy2D.cs のインスタンスへの参照（TurnAroundなどのメソッド呼び出し用）
+
+    // --- Patrol State Parameters ---
+    public float patrolSpeed = 2f;
+    public float patrolRange = 5f; // 開始地点からの巡回距離
+    public float alertTriggerDistance = 5f; // プレイヤー検知距離
+    public float turnCooldown = 0.5f; // 方向転換のクールダウン時間
+
+    private int moveDirection = 1; // 1: 右, -1: 左
+    private float lastTurnTime = -1f;
+
+    // --- Events to notify main script ---
+    /// <summary>
+    /// プレイヤーが検知されたときに発行されるイベント。
+    /// Enemy2D.cs がこのイベントを購読して、状態遷移を処理します。
+    /// </summary>
+    public event Action OnPlayerDetected;
+
+    // --- Initialization ---
+    /// <summary>
+    /// PatrolLogic を初期化します。
+    /// </summary>
+    /// <param name="rb">Rigidbody2D コンポーネント。</param>
+    /// <param name="sr">SpriteRenderer コンポーネント。</param>
+    /// <param name="animator">Animator コンポーネント。</param>
+    /// <param name="playerTransform">プレイヤーの Transform。</param>
+    /// <param name="initialPosition">敵の初期位置。</param>
+    /// <param name="mainEnemyScript">Enemy2D.cs のインスタンス。</param>
+    public void Initialize(Rigidbody2D rb, SpriteRenderer sr, Animator animator, Transform playerTransform, Vector3 initialPosition, Enemy2D mainEnemyScript)
+    {
+        this.rb = rb;
+        this.spriteRenderer = sr;
+        this.anim = animator;
+        this.player = playerTransform;
+        this.startPosition = initialPosition;
+        this.enemyScript = mainEnemyScript;
+
+        // 初期方向を設定
+        this.moveDirection = 1; // 例: 最初は右へ
+        this.lastTurnTime = -1f;
+
+        // 初期スプライトの向きを設定
+        UpdateSpriteFlip();
+    }
+
+    // --- Core Logic for Patrol State ---
+    /// <summary>
+    /// Patrol 状態での毎フレームの更新処理を実行します。
+    /// </summary>
+    public void HandlePatrolUpdate()
+    {
+        // 1. アニメーション再生
+        if (anim != null)
+        {
+            // "PatrollingWalk" という名前のアニメーション状態に遷移させる（またはトリガーを発火させる）
+            // AnimationController で "PatrollingWalk" という名前のトリガーが設定されていることを想定
+            // 現在のアニメーション状態が PatrollingWalk でない場合のみトリガーを発火させるようにすると、無限ループを防げます。
+            // ただし、AnimatorController の設定によっては、SetTrigger() のみを実行する方が良い場合もあります。
+            // もし SetTrigger() がループしてしまう場合は、AnimatorController の Exit Time の設定を確認してください。
+            anim.SetTrigger("PatrollingWalk");
+        }
+
+        // 2. プレイヤー検知
+        if (player != null)
+        {
+            float distanceToPlayer = Vector3.Distance(rb.position, player.position);
+            if (distanceToPlayer <= alertTriggerDistance)
+            {
+                // プレイヤーを検知したら、メインスクリプトに通知して状態遷移を促す
+                OnPlayerDetected?.Invoke();
+                return; // 状態遷移するので、このフレームの巡回処理は中断
+            }
+        }
+
+        // 3. 移動と方向転換ロジック
+        bool shouldTurn = false;
+
+        // 簡易的な巡回範囲外判定（Enemy2D.cs の TurnAround ロジックを流用）
+        // startPosition からの距離が patrolRange を超えたら方向転換
+        // transform.position は常に更新されるため、rb.position を使う方が物理演算の最新状態を反映します。
+        if (Vector3.Distance(rb.position, startPosition) >= patrolRange)
+        {
+            shouldTurn = true;
+        }
+
+        // Enemy2D.cs の壁判定や地面判定ロジックを呼び出す、またはここで実装する
+        // 例: if (enemyScript.CheckWallHit() || !enemyScript.CheckGround()) { shouldTurn = true; }
+        // ここでは、Enemy2D.cs に CheckWallHit() と CheckGround() が public で存在することを仮定します。
+        // また、Enemy2D.cs の Move() メソッドや TurnAround() メソッドに依存する部分があるため、
+        // enemyScript を介してそれらを呼び出す形になります。
+        if (enemyScript != null)
+        {
+            // Enemy2D.cs の wallLayer や groundLayer などの設定を利用する
+            // Enemy2D.cs に IsHitWall(int direction) と IsGrounded() が public で定義されていると仮定
+            if (enemyScript.IsHitWall(moveDirection) || !enemyScript.IsGrounded())
+            {
+                shouldTurn = true;
+            }
+        }
+
+        // 方向転換が必要で、クールダウンが経過していたら方向転換を実行
+        if (shouldTurn && CanTurn())
+        {
+            // Enemy2D.cs の TurnAround メソッドを呼び出す
+            // Enemy2D.cs に public void TurnAround() があると仮定
+            enemyScript.TurnAround();
+
+            // TurnAround() メソッド内で moveDirection が更新されることを期待
+            // もし TurnAround() で moveDirection が更新されない場合は、ここで更新する
+            // 例: enemyScript.UpdateMoveDirection(-moveDirection); // Enemy2D.cs にこのようなメソッドがあれば
+            // もしくは、ここで直接 moveDirection を更新し、SpriteRenderer のフリップも行う
+            // moveDirection *= -1;
+            // UpdateSpriteFlip(); // MoveDirection が更新されたらスプライトも更新
+        }
+
+        // 4. 移動速度を適用
+        if (rb != null)
+        {
+            // 壁や段差で方向転換が必要だが、まだクールダウン中の場合などは、一時的に停止させることも考慮
+            // ここでは、CanTurn() が false でない場合、または単純に進行方向へ移動させる
+            // Enemy2D.cs の moveDirection と同期させる必要がある
+            // Enemy2D.cs の TurnAround() で moveDirection が更新されることを期待
+            float currentMoveDirection = enemyScript != null ? enemyScript.getMoveDirection() : this.moveDirection; // Enemy2D.cs に getMoveDirection() があると仮定
+            rb.velocity = new Vector2(patrolSpeed * currentMoveDirection, rb.velocity.y);
+        }
+    }
+
+    // --- Helper Methods ---
+
+    /// <summary>
+    /// 方向転換が可能かどうかをクールダウン時間に基づいて判定します。
+    /// </summary>
+    private bool CanTurn()
+    {
+        return Time.time - lastTurnTime > turnCooldown;
+    }
+
+    /// <summary>
+    /// SpriteRenderer の向きを現在の moveDirection に基づいて更新します。
+    /// このメソッドは、Enemy2D.cs の TurnAround() メソッドから呼び出されるか、
+    /// もしくは PatrolLogic 側で MoveDirection の変更と同期させるために直接呼ばれるべきです。
+    /// Enemy2D.cs の TurnAround() の実装に依存します。
+    /// </summary>
+    private void UpdateSpriteFlip()
+    {
+        if (spriteRenderer != null && enemyScript != null)
+        {
+            // Enemy2D.cs の TurnAround() メソッドの実装に合わせます。
+            // Enemy2D.cs の TurnAround() では moveDirection が更新され、
+            // それに応じて flipX が設定されることを期待します。
+            // ここで直接 flipX を設定すると、 Enemy2D.cs の MoveDirection と同期が取れなくなる可能性があります。
+            // なので、Enemy2D.cs の TurnAround() メソッドが spriteRenderer.flipX も更新するように修正するのが最も安全です。
+            // もし、 Enemy2D.cs で flipX を更新しない場合は、このメソッドを直接呼ぶか、
+            // Enemy2D.cs に flipX を設定する public メソッドを追加する必要があります。
+
+            // 例: Enemy2D.cs の TurnAround() が moveDirection の更新と flipX の設定を行っている場合、
+            // ここでは何もする必要はありません。
+            // もし Enemy2D.cs の TurnAround() が moveDirection のみ更新し、
+            // flipX の更新を PatrolLogic に委ねる場合は、以下のようにします。
+
+            // if (moveDirection > 0) {
+            //     spriteRenderer.flipX = true;
+            // } else {
+            //     spriteRenderer.flipX = false;
+            // }
+        }
+    }
+
+    // Enemy2D.cs から呼び出されることを想定した、moveDirection を取得するメソッド
+    // Enemy2D.cs に public int getMoveDirection() があると仮定
+    public int GetMoveDirection()
+    {
+        return moveDirection;
+    }
+}

@@ -68,9 +68,7 @@ public class Enemy2D : MonoBehaviour
     
     void Update()
     {
-      //  CheckWall();
-      //  Move();
-        
+
        // if (facePlayer && player != null)
        //     FacePlayer();
 
@@ -148,9 +146,14 @@ public class Enemy2D : MonoBehaviour
 
     void HandleIdle()
     {
-        anim.SetTrigger("PatrollingWalk");
+      //  anim.SetTrigger("PatrollingWalk");
+        if (wallCheck != null)
+        CheckWall();
+        Move();
+        
+
     // 監視ロジック：プレイヤーとの距離が5以下なら
-    if (Vector3.Distance(transform.position, player.position) < 2f)
+    if (Vector3.Distance(transform.position, player.position) < moveRange)
     {
         currentState = EnemyState.Alert; // モード変更！
         alertTimer = 1.0f;              // 1秒間ビビらせる予約
