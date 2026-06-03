@@ -88,28 +88,28 @@ public class Playersc : MonoBehaviour
 	//		horizontalInput = 0;
 	//		Debug.Log("ブロック");
 	//	}
-    if (horizontalInput != 0 && coli.isground) 
-    {
-                if (!audioSource.isPlaying)
-            {
-                audioSource.loop = true;
-                PlaySE(idleSE); 
-            }
-    }
+   // if (horizontalInput != 0 && coli.isground) 
+   // {
+   //             if (!audioSource.isPlaying)
+   //         {
+   //             audioSource.loop = true;
+   //             PlaySE(idleSE); 
+   //         }
+   // }
 		}
             
         else if (Input.GetKey(KeyCode.LeftArrow)){
             horizontalInput = -1f;
             transform.localScale = new Vector3(-1, 1, 1);
 
-if (horizontalInput != 0 && coli.isground) 
-    {
-            if (!audioSource.isPlaying)
-            {
-                audioSource.loop = true;
-                PlaySE(idleSE);
-            }
-    }
+//if (horizontalInput != 0 && coli.isground) 
+//    {
+//            if (!audioSource.isPlaying)
+//            {
+//                audioSource.loop = true;
+//                PlaySE(idleSE);
+//            }
+//    }
         }
 
         // ジャンプ入力
