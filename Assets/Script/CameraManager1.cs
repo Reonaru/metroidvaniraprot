@@ -51,6 +51,7 @@ void Start()
     {
         // 1. カメラの初期位置を記憶
         initialPosition = transform.position;
+        Debug.Log($"📷 カメラの初期位置: {initialPosition}");
 
         // 2. scrolオブジェクトの初期位置を記憶
         GameObject scrol = GameObject.Find("scrol");
@@ -63,7 +64,7 @@ void Start()
         {
             Debug.LogError("scrolオブジェクトが見つかりませんでした。");
         }
-        
+
         // ...
     }
 
