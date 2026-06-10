@@ -40,6 +40,10 @@ public class CameraManager1 : MonoBehaviour
     // ★ プレイヤーのリトライに備えて、カメラの初期位置を記憶する
     private Vector3 initialPosition;
     private Vector3 initialScrolPosition;
+    private float initialMinXLimit;
+    private float initialMaxXStopLimit;
+    private float initialMinYLimit;
+    private float initialMaxYLimit;
 
 
 public float HalfWidth
@@ -53,7 +57,14 @@ void Start()
         initialPosition = transform.position;
         Debug.Log($"📷 カメラの初期位置: {initialPosition}");
 
-        // 2. scrolオブジェクトの初期位置を記憶
+        // 2. カメラ境界線の初期値を記憶
+        initialMinXLimit = minXLimit;
+        initialMaxXStopLimit = maxXStopLimit;
+        initialMinYLimit = minYLimit;
+        initialMaxYLimit = maxYLimit;
+        Debug.Log($"📷 カメラ境界線初期値: minX={initialMinXLimit}, maxX={initialMaxXStopLimit}, minY={initialMinYLimit}, maxY={initialMaxYLimit}");
+
+        // 3. scrolオブジェクトの初期位置を記憶
         GameObject scrol = GameObject.Find("scrol");
 
         if (scrol != null)
@@ -139,11 +150,11 @@ public void UpdateCameraBounds(float newMinX, float newMaxX, float newMinY, floa
         transform.position = initialPosition;
 
         // 2. スクロール制限変数を初期値に戻す
-        // (ここでは Start() で設定された初期位置のX座標に戻すと仮定)
-        // ※生成AIにinitailPosition.xをminとMaxに入れたけどカメラの場所の座標なのでもともともmaxXStopLimitとminXLimitをいれている
-        // 生成AIでもともと使っていたものを使うと思った通りに動かない
-        maxXStopLimit = 10.0f;
-        minXLimit = 0.0f;
+        minXLimit = initialMinXLimit;
+        maxXStopLimit = initialMaxXStopLimit;
+        minYLimit = initialMinYLimit;
+        maxYLimit = initialMaxYLimit;
+        Debug.Log($"📷 カメラ境界線をリセット: minX={minXLimit}, maxX={maxXStopLimit}, minY={minYLimit}, maxY={maxYLimit}");
 
         // 3. 慣性（SmoothDampなど）とフラグをリセット
         currentVelocity = Vector3.zero;
