@@ -175,6 +175,27 @@ scrol.transform.position = initialScrolPosition;
         return isScrolling;
     }
 
+    public void SetBounds(RoomData room)
+    {
+        if (room == null)
+        {
+            Debug.LogError("RoomData が null です");
+            return;
+        }
+
+        Camera cam = Camera.main;
+        float halfWidth = cam.orthographicSize * cam.aspect;
+
+        minXLimit = room.minXBoundary + halfWidth;
+        maxXStopLimit = room.maxXBoundary - halfWidth;
+        minYLimit = room.YBoundary;
+        maxYLimit = room.maxYBoundary;
+
+        currentVelocity = Vector3.zero;
+
+        Debug.Log($"📷 カメラ境界線を設定: minX={minXLimit:F2}, maxX={maxXStopLimit:F2}, minY={minYLimit:F2}, maxY={maxYLimit:F2}");
+    }
+
   //// --- 通常の追従処理（例） ---
   //private void LateUpdate()
   //{

@@ -67,13 +67,8 @@ else if (moveDirection == ScrollDirection.Down) player.transform.position -= new
     // 例：右移動なら少し右へ、左移動なら少し左へ
         if (cameraManager != null)
         {
-            // 💡 カメラの境界をScriptableObjectの値で即座に更新
-            cameraManager.UpdateCameraBounds(
-                newRoom.minXBoundary,
-                newRoom.maxXBoundary,
-                newRoom.YBoundary,    // これが minY になる
-                newRoom.maxYBoundary  // 🚩 これを RoomData に追加して渡す！
-            );
+            // 💡 RoomDataから直接境界線を設定
+            cameraManager.SetBounds(newRoom);
         }
         
         // 💡 部屋IDフラグを更新

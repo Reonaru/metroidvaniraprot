@@ -33,23 +33,28 @@ private Vector2 direction;
     {
         if (other.CompareTag("enemy"))
         {
+            // 敵にダメージとノックバックを与える
+            EnemyBase enemy = other.GetComponent<EnemyBase>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(3, transform.position);
+                Debug.Log("敵に命中 - ダメージ＆ノックバック");
+            }
 
             Destroy(gameObject);
-            Debug.Log("敵に命中");
-
-
-
         }
 
         if (other.CompareTag("shatter"))
         {
+            // シャッターを揺らす
+            DoorController door = other.GetComponent<DoorController>();
+            if (door != null)
+            {
+                door.Shake();
+            }
 
             Destroy(gameObject);
             Debug.Log("shatter");
-
-
-
         }
-
     }
 }
