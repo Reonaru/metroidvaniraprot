@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e47bf51185baeac4e8a46f211e6bc946, type: 3}
-  m_Name: room4
-  m_EditorClassIdentifier: 
-  roomID: 4
-  maxXBoundary: 220
-  minXBoundary: 188
+  m_Name: room7
+  m_EditorClassIdentifier:
+  roomID: 7
+  maxXBoundary: 260
+  minXBoundary: 220
   YBoundary: 0
