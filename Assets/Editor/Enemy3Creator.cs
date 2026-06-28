@@ -50,8 +50,9 @@ public class Enemy3Creator
         Enemy3 enemy = obj.GetComponent<Enemy3>();
         enemy.hp = 15;              // 弾5発で倒せる！
         enemy.moveSpeed = 4f;       // 速い！
-        enemy.damage = 1;
+        enemy.damageAmount = 3f;
         enemy.moveRange = 10f;      // 広い検知範囲！
+        enemy.roomID = "Room3";     // 敵撃破フラグ用
 
         // Room3の中央付近に配置
         obj.transform.position = new Vector3(134, 1, 0);

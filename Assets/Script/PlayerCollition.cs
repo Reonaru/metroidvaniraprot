@@ -7,7 +7,7 @@ public class PlayerCollition : MonoBehaviour
 {
 
 	[Header("プレイヤー設定")]
-	public float health = 100f;
+	public float health = 20f;
 	public float invincibilityTime = 1f;
 
     [Header("削除するオブジェクト設定")]
@@ -76,7 +76,15 @@ public class PlayerCollition : MonoBehaviour
 
     if (other.CompareTag("enemy"))
     {
-        TakeDamage(damageAmount);
+        EnemyBase enemy = other.GetComponent<EnemyBase>();
+        if (enemy != null)
+        {
+            TakeDamage(enemy.damageAmount);
+        }
+        else
+        {
+            TakeDamage(damageAmount);
+        }
         Debug.Log("敵にぶつかりました！");
     }
 

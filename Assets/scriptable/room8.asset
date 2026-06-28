@@ -15,4 +15,5 @@ MonoBehaviour:
   roomID: 8
   maxXBoundary: 300
   minXBoundary: 260
-  YBoundary: 0
+  YBoundary: -15
+  maxYBoundary: 10

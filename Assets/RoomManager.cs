@@ -38,10 +38,35 @@ public class RoomManager : MonoBehaviour
 
         // 💡 最初の部屋の境界とカメラ位置を設定
          SetCurrentRoom(allRoomData[0], false);
-        
+
 
         // 💡 全てのTriggerを自動生成
 //        GenerateRoomTriggers();
+    }
+
+    void Update()
+    {
+        // デバッグ用：数字キー（1～8）でRoom を直接ジャンプ
+        for (int i = 1; i <= 8; i++)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha0 + i))
+            {
+                Debug.Log($"キー {i} 押下。allRoomData.Length={allRoomData.Length}, 要求index={i-1}");
+                if (i - 1 < allRoomData.Length)
+                {
+                    RoomData target = allRoomData[i - 1];
+                    Debug.Log($"対象RoomData: {(target != null ? target.name : "NULL")}");
+                    if (target != null)
+                    {
+                        JumpToRoom(target);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"Room {i} はallRoomDataに存在しません");
+                }
+            }
+        }
     }
 
 
@@ -74,6 +99,34 @@ else if (moveDirection == ScrollDirection.Down) player.transform.position -= new
         // 💡 部屋IDフラグを更新
         currentRoomID = newRoom.roomID;
         Debug.Log($"現在の部屋: Room ID {currentRoomID}, X追従範囲: {newRoom.minXBoundary} ~ {newRoom.maxXBoundary}");
+
+        // 💡 Room11に入ったら敵スポーナーを開始
+        if (newRoom.roomID == 11)
+        {
+            GameObject spawnerObj = GameObject.Find("Room11_EnemySpawner");
+            if (spawnerObj != null)
+            {
+                EnemySpawner spawner = spawnerObj.GetComponent<EnemySpawner>();
+                if (spawner != null)
+                {
+                    spawner.StartSpawning();
+                }
+            }
+        }
+
+        // 💡 Room8に入ったら進入イベント実行
+        if (newRoom.roomID == 8)
+        {
+            GameObject dialogueObj = GameObject.Find("Room8_DialogueController");
+            if (dialogueObj != null)
+            {
+                Room8Dialogue dialogue = dialogueObj.GetComponent<Room8Dialogue>();
+                if (dialogue != null)
+                {
+                    dialogue.OnEnterRoom8();
+                }
+            }
+        }
     }
     
 
@@ -91,26 +144,24 @@ public void StartScroll(RoomData targetRoom)
     if (rb != null) rb.simulated = false;
 
     Vector3 camPos = cameraManager.transform.position;
-    
-    // 💡 初期値として今のXを保持。これで「勝手に端に飛ぶ」のを防ぐ
-    float finalX = camPos.x; 
-    float finalY = targetRoom.YBoundary;
+
+    // 💡 スクロール方向をフラグで明示的に判定
+    float finalX = camPos.x;
+    float finalY = camPos.y;
 
     float diffX = targetRoom.minXBoundary - camPos.x;
     float diffY = targetRoom.YBoundary - camPos.y;
 
-
-    // 💡 修正のキモ：縦の移動距離が一定(2.0f)以上なら、横のことは考えない！
-    if (Mathf.Abs(diffY) > 2.0f) 
+    if (targetRoom.scrollType == RoomData.ScrollType.Vertical)
     {
+        // 縦スクロール：Y を目標値に移動、X は範囲内に調整
         moveDirection = (diffY > 0) ? ScrollDirection.Up : ScrollDirection.Down;
-
-        // 縦移動中は今のXを維持しつつ、新しい部屋の範囲(40〜80)に収めるだけにする
+        finalY = targetRoom.YBoundary;
         finalX = Mathf.Clamp(camPos.x, targetRoom.minXBoundary, targetRoom.maxXBoundary);
     }
-    else 
+    else
     {
-        // 縦移動じゃない（横移動）の時だけ、端っこ(Min/Max)を目指す
+        // 横スクロール：X を移動、Y は固定
         if (diffX > 0) {
             moveDirection = ScrollDirection.Right;
             finalX = targetRoom.minXBoundary;
@@ -133,6 +184,18 @@ public void StartScroll(RoomData targetRoom)
         SetCurrentRoom(targetRoom, true);
     });
 }
+
+    void JumpToRoom(RoomData targetRoom)
+    {
+        // プレイヤーを対応するRoom の中央に配置
+        float centerX = (targetRoom.minXBoundary + targetRoom.maxXBoundary) / 2f;
+        player.transform.position = new Vector3(centerX, 0, 0);
+
+        // Room を直接設定（スクロール無し）
+        SetCurrentRoom(targetRoom, false);
+
+        Debug.Log($"<color=green>デバッグ：Room {targetRoom.roomID} にジャンプしました</color>");
+    }
 
 public void ResetRoom()
 {

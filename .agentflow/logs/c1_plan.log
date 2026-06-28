@@ -1,0 +1,14 @@
+ファイル書き込み許可が必要です。`02_plan.md` を `.agentflow/` フォルダに作成しようとしています。許可をいただけますか？
+
+**計画の概要（事前にご確認ください）:**
+
+**対象**: 敵全滅ギミックシステムの疎結合化（+ RoomManager のハードコード除去）
+
+**主な変更点:**
+1. **新規 `RoomEnemyTracker.cs`** — 部屋ごとに敵の生存数を管理し、全滅時に `OnRoomCleared` イベントを発行
+2. **`shatter.cs` 書き直し** — `Update()` ポーリングをやめてイベント購読に変更
+3. **`RoomData.cs`** — `UnityEvent onEnterRoom` フィールドを追加
+4. **`RoomManager.cs`** — Room8/11のハードコードを削除し `onEnterRoom.Invoke()` に統一
+5. **`EnemyBase.cs`** — `Die()` から部屋フラグ設定を削除（責任をRoomEnemyTrackerに移す）
+
+許可をいただければ `02_plan.md` を書き込みます。

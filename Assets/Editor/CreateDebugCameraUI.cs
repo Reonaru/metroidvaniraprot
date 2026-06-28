@@ -26,6 +26,33 @@ public class CreateDebugCameraUI
             Debug.Log("既存のDebugTextを削除しました");
         }
 
+        // DebugText という名前の Text オブジェクトのみを削除（他の Text は残す）
+        Canvas tempCanvas = Object.FindObjectOfType<Canvas>();
+        if (tempCanvas != null)
+        {
+            Text[] allTexts = tempCanvas.GetComponentsInChildren<Text>();
+            foreach (Text t in allTexts)
+            {
+                if (t.gameObject.name == "DebugText")
+                {
+                    Object.DestroyImmediate(t.gameObject);
+                    Debug.Log($"Canvas内の DebugText オブジェクトを削除しました");
+                }
+            }
+        }
+
+        // 既存のDebugCameraUIスクリプトがあれば削除
+        Canvas existingCanvas = Object.FindObjectOfType<Canvas>();
+        if (existingCanvas != null)
+        {
+            DebugCameraUI existingDebugUI = existingCanvas.GetComponent<DebugCameraUI>();
+            if (existingDebugUI != null)
+            {
+                Object.DestroyImmediate(existingDebugUI);
+                Debug.Log("既存のDebugCameraUIスクリプトを削除しました");
+            }
+        }
+
         // 既存のCanvasを探す
         Canvas canvas = Object.FindObjectOfType<Canvas>();
         if (canvas == null)

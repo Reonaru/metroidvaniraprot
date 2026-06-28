@@ -1,0 +1,35 @@
+ファイル書き込みの許可が必要です。許可をいただけますか？
+
+もし許可が難しい場合は、思考の結論をここに提示します。
+
+---
+
+## 思考フェーズの結論
+
+**今サイクルで取り組む最優先課題: `RoomManager` の密結合解消**
+
+### 発見した問題（3件）
+
+| 問題 | 深刻度 | 内容 |
+|------|--------|------|
+| A | **高** | `RoomManager.SetCurrentRoom()` に Room8/Room11 のIDをハードコード＋`GameObject.Find()` 依存 |
+| B | 中 | `EnemyBase` がバレットのダメージ値を無視して固定値3を使用 |
+| C | 低 | `HPBar` で `sizeDelta`と`offsetMax` が混在 |
+
+### なぜ問題Aが最優先か
+
+**設計方針「Managerクラスによる疎結合」に直接違反**しているため。現在 `RoomManager.SetCurrentRoom()` は Room8・Room11 の固有処理を直接ハードコードしており、新しい部屋を追加するたびに RoomManager を修正しなければならない（開放閉鎖原則違反）。今は2部屋だが放置すると指数的にコストが増大する。
+
+### 解決方針
+
+```csharp
+// RoomManager に static イベントを1本追加
+public static event System.Action<RoomData> OnRoomEntered;
+
+// SetCurrentRoom() の末尾でイベント発火
+OnRoomEntered?.Invoke(newRoom);
+```
+
+`Room8Dialogue` と `EnemySpawner` がそれぞれ自分の `Awake` でこのイベントを購読し、受け取った `roomID` を自己判断で処理する。RoomManager からは Room8/Room11 のハードコードブロックを削除する。
+
+許可をいただければ、このまま `01_think.md` に書き込み、次サイクルの実装フェーズへ進めます。

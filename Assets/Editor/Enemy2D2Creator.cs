@@ -50,7 +50,7 @@ public class Enemy2D2Creator
         Enemy2D2 enemy = obj.GetComponent<Enemy2D2>();
         enemy.hp = 3;
         enemy.moveSpeed = 2f;
-        enemy.damage = 1;
+        enemy.damageAmount = 3f;
         enemy.moveRange = 5f;
 
         // カメラ視界内に配置

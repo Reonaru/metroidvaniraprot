@@ -35,8 +35,8 @@ public class CreateRoom7Triggers
         // 左端トリガー（Room7→Room4）- 境界線より0.25先
         CreateTrigger("Room7_LeftTrigger", leftBoundaryX + 0.25f, triggerY, triggerHeight, room4);
 
-        // 右端トリガー（Room7→Room8）- 境界線より1先
-        CreateTrigger("Room7_RightTrigger", rightBoundaryX + 1f, triggerY, triggerHeight, room8);
+        // 右端トリガー（Room7→Room8）- 境界線より0.25手前
+        CreateTrigger("Room7_RightTrigger", rightBoundaryX - 0.25f, triggerY, triggerHeight, room8);
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         Debug.Log("Room7 スクロールトリガーを作成しました");

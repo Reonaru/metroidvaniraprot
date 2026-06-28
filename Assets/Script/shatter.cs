@@ -9,7 +9,7 @@ public class shatter : MonoBehaviour
     void Update()
     {
     bool isClear = Gmanager.Instance.GetFlag(targetFlagName);
-    
+
     // 💡 ログを出して、今何を読み取っているか強制的に表示させる
 
         // 💡 Gmanagerに「俺が開くべきフラグは true になったか？」と聞き続ける
@@ -23,6 +23,6 @@ public class shatter : MonoBehaviour
     {
         Debug.Log($"{gameObject.name} が開きました！");
         // 最もシンプルな「扉が開く」処理
-        gameObject.SetActive(false); 
+        gameObject.SetActive(false);
     }
 }

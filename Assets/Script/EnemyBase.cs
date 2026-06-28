@@ -6,8 +6,11 @@ public class EnemyBase : MonoBehaviour
     [Header("基本設定")]
     public int hp = 3;
     public float moveSpeed = 2f;
-    public int damage = 1;
     public float mass = 1f;
+    public string roomID = "";
+
+    [Header("ダメージ設定")]
+    public float damageAmount = 3f;
 
     [Header("移動設定")]
     public float moveRange = 5f;
@@ -61,6 +64,21 @@ public class EnemyBase : MonoBehaviour
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
             player = playerObj.transform;
+
+        // roomID が未設定なら、座標からRoom を自動判定
+        if (string.IsNullOrEmpty(roomID))
+        {
+            RoomManager roomManager = FindObjectOfType<RoomManager>();
+            if (roomManager != null)
+            {
+                RoomData room = roomManager.GetRoomByPosition(transform.position);
+                if (room != null)
+                {
+                    roomID = "Room" + room.roomID;
+                    Debug.Log($"敵 {gameObject.name} の roomID を自動設定: {roomID}");
+                }
+            }
+        }
     }
 
     protected virtual void Update()
@@ -263,6 +281,13 @@ public class EnemyBase : MonoBehaviour
         OnAnyEnemyDeath?.Invoke(this.gameObject);
         Debug.Log("イベントを飛ばします");
 
+        // 敵撃破フラグを立てる
+        if (!string.IsNullOrEmpty(roomID))
+        {
+            Gmanager.Instance.SetFlag(roomID + "_Enemy_Defeated", true);
+            Debug.Log($"フラグ '{roomID}_Enemy_Defeated' を立てました");
+        }
+
         Destroy(gameObject);
     }
 
@@ -282,7 +307,7 @@ public class EnemyBase : MonoBehaviour
         }
     }
 
-    protected void OnTriggerEnter2D(Collider2D other)
+    protected virtual void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("bullet"))
         {
