@@ -1,0 +1,154 @@
+#!/bin/bash
+# Unity作業ログ自動生成スクリプト
+
+DATE=$(date +%Y-%m-%d)
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+LOG_DIR="/Users/unity_dev/01_clcode_Unity_doc/logs/$DATE"
+LOG_PATH="$LOG_DIR/work.md"
+DEBUG_LOG="/Users/unity_dev/Library/Logs/unitydev-autolog-debug.log"
+
+log() {
+    echo "[$(date '+%H:%M:%S')] $1" >> "$DEBUG_LOG"
+}
+
+notify_error() {
+    osascript -e "display notification \"$1\" with title \"作業ログ エラー\""
+    log "ERROR: $1"
+}
+
+log "===== 開始 ====="
+
+# Unity関連プロジェクトのセッションディレクトリ
+UNITY_SESSION_DIRS=(
+    "/Users/unity_dev/.claude/projects/-Users-unity-dev-02-Unity-projects-My-project--9-"
+    "/Users/unity_dev/.claude/projects/-Users-unity-dev-02-Unity-projects-My-project--9--Assets"
+    "/Users/unity_dev/.claude/projects/-Users-unity-dev-Unipro-My-project--9-"
+)
+
+# claude コマンドのパスを解決（グロブ展開で高速検索）
+CLAUDE_BIN=$(printf '%s\n' /nix/store/*-claude-code-*/bin/claude 2>/dev/null | sort | tail -1)
+
+if [ -z "$CLAUDE_BIN" ]; then
+    notify_error "claude コマンドが見つかりません"
+    exit 1
+fi
+log "claude: $CLAUDE_BIN"
+
+# jq のパスを解決（グロブ展開で高速検索）
+JQ_BIN=$(printf '%s\n' /nix/store/*-jq-*/bin/jq 2>/dev/null | sort | tail -1)
+
+if [ -z "$JQ_BIN" ]; then
+    notify_error "jq コマンドが見つかりません"
+    exit 1
+fi
+log "jq: $JQ_BIN"
+
+# 今日更新されたjsonlを収集
+UPDATED_JSONLS=()
+for dir in "${UNITY_SESSION_DIRS[@]}"; do
+    if [ -d "$dir" ]; then
+        while IFS= read -r f; do
+            UPDATED_JSONLS+=("$f")
+            log "対象jsonl: $f"
+        done < <(find "$dir" -name "*.jsonl" -not -path "*/subagents/*" -newermt "${DATE} 00:00:00" 2>/dev/null)
+    fi
+done
+
+if [ ${#UPDATED_JSONLS[@]} -eq 0 ]; then
+    log "今日更新されたjsonlなし → スキップ"
+    exit 0
+fi
+
+# work.md が存在する場合、最新のjsonlより古ければ再生成、新しければスキップ
+if [ -f "$LOG_PATH" ]; then
+    NEEDS_UPDATE=false
+    for jsonl in "${UPDATED_JSONLS[@]}"; do
+        if [ "$jsonl" -nt "$LOG_PATH" ]; then
+            NEEDS_UPDATE=true
+            log "jsonlがwork.mdより新しい: $jsonl → 再生成"
+            break
+        fi
+    done
+    if [ "$NEEDS_UPDATE" = false ]; then
+        log "work.mdは最新です → スキップ"
+        exit 0
+    fi
+fi
+
+# 会話を抽出
+CONVERSATION=""
+for jsonl in "${UPDATED_JSONLS[@]}"; do
+    PART=$("$JQ_BIN" -r --arg today "$DATE" '
+        select(.timestamp != null) |
+        select(.timestamp | startswith($today)) |
+        select(.type == "user" or .type == "assistant") |
+        select(.message != null) |
+        .message |
+        {
+            role: .role,
+            content: (
+                .content |
+                if type == "string" then .
+                elif type == "array" then
+                    [.[] | select(.type == "text") | .text] | join(" ")
+                else ""
+                end
+            )
+        } |
+        select(.content | length > 5) |
+        "[\(.role)]: \(.content)"
+    ' "$jsonl" 2>/dev/null)
+    if [ -n "$PART" ]; then
+        CONVERSATION="${CONVERSATION}${PART}"$'\n'
+    fi
+done
+
+if [ -z "$CONVERSATION" ]; then
+    log "今日のメッセージが抽出できませんでした → スキップ"
+    exit 0
+fi
+log "会話抽出完了"
+
+# ログ生成
+mkdir -p "$LOG_DIR"
+log "claude -p でログ生成中..."
+
+PROMPT="以下は Unity Metroidvania ゲーム開発プロジェクトの ${DATE} の作業会話ログです。
+この内容から作業ログを日本語で生成してください。
+ファイルの先頭に必ず「最終更新: ${TIMESTAMP}」を記載してください。
+
+出力フォーマット:
+# 作業ログ ${DATE}
+**最終更新:** ${TIMESTAMP}
+
+## 作業 #N: タイトル
+**実施内容**: （何をしたか）
+**修正内容/詳細**: （具体的な変更点・コード等）
+**結果**: ✅ 完成 / ⚠️ 注意点あり
+
+## 未完了タスク
+- ...
+
+---
+会話ログ:
+${CONVERSATION}"
+
+"$CLAUDE_BIN" -p "$PROMPT" > "$LOG_PATH"
+
+if [ ! -f "$LOG_PATH" ] || [ ! -s "$LOG_PATH" ]; then
+    notify_error "ログ生成に失敗しました"
+    log "ログ生成失敗"
+    exit 1
+fi
+log "ログ生成完了: $LOG_PATH"
+
+# Outlookでメール送信
+osascript \
+    -e "tell application \"Microsoft Outlook\"" \
+    -e "set msg to make new outgoing message with properties {subject:\"【Unity】作業ログ生成 ${DATE} ${TIMESTAMP}\", content:\"${TIMESTAMP} の作業ログを生成しました。\n\n${LOG_PATH}\"}" \
+    -e "make new recipient at msg with properties {email address:{address:\"reonaru.dev@outlook.jp\"}}" \
+    -e "send msg" \
+    -e "end tell"
+
+log "メール送信完了"
+log "===== 終了 ====="
