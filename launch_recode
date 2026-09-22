@@ -3,9 +3,9 @@
 
 DATE=$(date +%Y-%m-%d)
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-LOG_DIR="/Users/unity_dev/01_clcode_Unity_doc/logs/$DATE"
+LOG_DIR="/xxxxxxxxxx/xxxxxxxxxx/xxxxxxxxxx/logs/$DATE"
 LOG_PATH="$LOG_DIR/work.md"
-DEBUG_LOG="/Users/unity_dev/Library/Logs/unitydev-autolog-debug.log"
+DEBUG_LOG="/xxxxxxxxxx/xxxxxxxxxx/xxxxxxxxxx/Logs/unitydev-autolog-debug.log"
 
 log() {
     echo "[$(date '+%H:%M:%S')] $1" >> "$DEBUG_LOG"
@@ -20,9 +20,9 @@ log "===== 開始 ====="
 
 # Unity関連プロジェクトのセッションディレクトリ
 UNITY_SESSION_DIRS=(
-    "/Users/unity_dev/.claude/projects/-Users-unity-dev-02-Unity-projects-My-project--9-"
-    "/Users/unity_dev/.claude/projects/-Users-unity-dev-02-Unity-projects-My-project--9--Assets"
-    "/Users/unity_dev/.claude/projects/-Users-unity-dev-Unipro-My-project--9-"
+    "/xxxxxxxxxx/xxxxxxxxxx/.claude/projects/-Users-unity-dev-02-Unity-projects-My-project--9-"
+    "/xxxxxxxxxx/xxxxxxxxxx/.claude/projects/-Users-unity-dev-02-Unity-projects-My-project--9--Assets"
+    "/xxxxxxxxxx/xxxxxxxxxx/.claude/projects/-Users-unity-dev-Unipro-My-project--9-"
 )
 
 # claude コマンドのパスを解決（グロブ展開で高速検索）
